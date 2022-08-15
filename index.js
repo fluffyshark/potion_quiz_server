@@ -9,8 +9,8 @@ const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
-     //   origin: "https://astounding-cobbler-6f7739.netlify.app/",
-        origin: "http://localhost:3000",
+        origin: "https://astounding-cobbler-6f7739.netlify.app/",
+    //    origin: "http://localhost:3000",
         methods: ["POST", "GET"]
     }
 })
