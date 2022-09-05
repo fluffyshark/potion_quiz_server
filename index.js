@@ -44,6 +44,10 @@ io.on("connection", (socket) => {
     io.in(gameCode).emit("sending_server_gameData", gameData);
   });
 
+  socket.on("potion_effect", (potionData) => {
+    console.log("potion_effect", potionData)
+    io.to(potionData.id).emit("potion_curse_blessing", potionData);
+  })
 
 
 });
