@@ -45,10 +45,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("potion_effect", (potionData) => {
-    console.log("potion_effect", potionData)
-    io.to(potionData.id).emit("potion_curse_blessing", potionData);
+    console.log("potion_effect", potionData.emitData)
+    // Sends data to one, two, or three players depending on potion type on client side.
+    if (potionData.emitData.length === 1) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0])}
+    if (potionData.emitData.length === 2) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0]); io.to(potionData.emitData[1].id).emit("potion_curse_blessing", potionData.emitData[1])}
+    if (potionData.emitData.length === 3) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0]); io.to(potionData.emitData[1].id).emit("potion_curse_blessing", potionData.emitData[1]); io.to(potionData.emitData[2].id).emit("potion_curse_blessing", potionData.emitData[2])}
+    
   })
 
+  /// NEXT - CHECK POTIONDATA.EMITDATA LENGHTH AND SEND TO SEVERAL PLAYERS IF LONGER THAN 1
 
 });
 
