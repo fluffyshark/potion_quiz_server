@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
 
   let gameData = []
   let gameCode;
+  let hostID;
   
 io.on("connection", (socket) => {
 
@@ -34,7 +35,11 @@ io.on("connection", (socket) => {
   });
 
   // When host press "Start Game" all players are directed to QuizView
-  socket.on("ready_game", (data) => {io.in(data).emit("start_game", gameData); console.log(gameData)});
+  socket.on("ready_game", (data) => {
+    hostID = socket.id
+    io.in(data).emit("start_game", gameData); console.log(gameData); 
+    io.in(data).emit("host_id", hostID); 
+  });
 
   // playerData returns {player: string, points: int}
   socket.on("sending_player_cards", (playerData) => {
@@ -53,7 +58,10 @@ io.on("connection", (socket) => {
     
   })
 
-  /// NEXT - CHECK POTIONDATA.EMITDATA LENGHTH AND SEND TO SEVERAL PLAYERS IF LONGER THAN 1
+  socket.on("sending_jukebox_to_server", (melodyData) => {
+    console.log("sending_jukebox_to_server", melodyData)
+    io.to(melodyData.hostID).emit("sending_jukebox_to_host", melodyData)
+  })
 
 });
 
