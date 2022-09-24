@@ -1,19 +1,28 @@
+const app = require('express')();
+const http = require('http').Server(app);
+const io = require('socket.io')(http, {cors: {origin: '*'}});
+const port = process.env.PORT || 3000;
+
+/*
 const express = require("express")
 const app = express()
 const http = require("http")
 const {Server} = require("socket.io")
 const cors = require("cors")
 
+
 app.use(cors())
 const server = http.createServer(app)
 
 const io = new Server(server, {
     cors: {
-    //    origin: "https://astounding-cobbler-6f7739.netlify.app/",
-        origin: "http://localhost:3000",
+        origin: "https://astounding-cobbler-6f7739.netlify.app/",
+    //    origin: "http://localhost:3000",
         methods: ["POST", "GET"]
     }
 })
+
+*/
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
@@ -22,6 +31,8 @@ app.get('/', (req, res) => {
   let gameData = []
   let gameCode;
   let hostID;
+
+  // NEXT - FOLLOW THE DATA TO FIND OUT WHERE GAMEDATA DISAPEARS 
   
 io.on("connection", (socket) => {
 
@@ -37,8 +48,12 @@ io.on("connection", (socket) => {
   // When host press "Start Game" all players are directed to QuizView
   socket.on("ready_game", (data) => {
     hostID = socket.id
-    io.in(data).emit("start_game", gameData); console.log(gameData); 
+    let newGameData = gameData.filter(player => player.gameCode === gameCode);
+    gameData = newGameData
+    io.in(data).emit("start_game", newGameData); console.log(newGameData); 
     io.in(data).emit("host_id", hostID); 
+    console.log("newGameData", newGameData)
+    console.log("GameData", gameData)
   });
 
   // playerData returns {player: string, points: int}
@@ -47,6 +62,8 @@ io.on("connection", (socket) => {
     updateGameData(playerData)
     // Sending all players' collected game data to all players in the same room
     io.in(gameCode).emit("sending_server_gameData", gameData);
+    console.log("GAMEDATA AFTER CRAFTING POTION", gameData)
+    
   });
 
   socket.on("potion_effect", (potionData) => {
@@ -58,6 +75,7 @@ io.on("connection", (socket) => {
     
   })
 
+  // Server receiving a melody "string" from player and server sends it to host
   socket.on("sending_jukebox_to_server", (melodyData) => {
     console.log("sending_jukebox_to_server", melodyData)
     io.to(melodyData.hostID).emit("sending_jukebox_to_host", melodyData)
@@ -68,13 +86,18 @@ io.on("connection", (socket) => {
 
 // Updating all players' collected game data every time a player get a new card
 function updateGameData(playerData) {
-  gameData.map((player) => {if (player.playerName === playerData.playerName) {player.cards = playerData.cards, player.coins = playerData.coins}})
+  gameData.map((player) => {if (player.playerName === playerData.playerName) {player.cards = playerData.cards, player.coins = playerData.coins} else {console.log(playerData.playerName, "no match")}})
+  console.log("LOOK FOR COINS PLAYERDATA", playerData)
 }
 
 
 
-
+/*
 server.listen(3001, () => {
     console.log("server is running")
 })
+*/
 
+http.listen(port, () => {
+  console.log(`Socket.IO server running at http://localhost:${port}/`);
+});
