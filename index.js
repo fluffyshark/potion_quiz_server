@@ -3,26 +3,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http, {cors: {origin: '*'}});
 const port = process.env.PORT || 3001;
 
-/*
-const express = require("express")
-const app = express()
-const http = require("http")
-const {Server} = require("socket.io")
-const cors = require("cors")
 
-
-app.use(cors())
-const server = http.createServer(app)
-
-const io = new Server(server, {
-    cors: {
-        origin: "https://astounding-cobbler-6f7739.netlify.app/",
-    //    origin: "http://localhost:3000",
-        methods: ["POST", "GET"]
-    }
-})
-
-*/
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
@@ -32,16 +13,17 @@ app.get('/', (req, res) => {
   let gameCode;
   let hostID;
 
-  // NEXT - FOLLOW THE DATA TO FIND OUT WHERE GAMEDATA DISAPEARS 
+
   
 io.on("connection", (socket) => {
 
   // Player and host join the same room
   socket.on("join_room", (data) => {socket.join(data); gameCode = data});
-
+  
   // When player join, then player data is sent to host, player nickname are displayed on host screen
   socket.on("player_joining", (data) => {
     socket.to(data.gameCode).emit("player_accepted", data);
+    console.log("data", data)
     gameData.push({id: socket.id, playerName: data.nickname, cards: data.cards, gameCode: data.gameCode})
   });
 
@@ -50,7 +32,7 @@ io.on("connection", (socket) => {
     hostID = socket.id
     let newGameData = gameData.filter(player => player.gameCode === gameCode);
     gameData = newGameData
-    io.in(data).emit("start_game", newGameData); console.log(newGameData); 
+    io.in(data).emit("start_game", newGameData); console.log("newGameData", newGameData); 
     io.in(data).emit("host_id", hostID); 
     console.log("newGameData", newGameData)
     console.log("GameData", gameData)
@@ -62,7 +44,7 @@ io.on("connection", (socket) => {
     updateGameData(playerData)
     // Sending all players' collected game data to all players in the same room
     io.in(gameCode).emit("sending_server_gameData", gameData);
-    console.log("GAMEDATA AFTER CRAFTING POTION", gameData)
+   // console.log("GAMEDATA AFTER CRAFTING POTION", gameData)
     
   });
 
@@ -81,6 +63,14 @@ io.on("connection", (socket) => {
     io.to(melodyData.hostID).emit("sending_jukebox_to_host", melodyData)
   })
 
+
+  socket.on("sending_player_sellorder", (sellData) => {
+    console.log("sending_player_sellorder", sellData)
+    let marketData = {playerName: sellData.playerName, playerID: sellData.playerID}
+    io.to(sellData.gameCode).emit("sending_marketData_to_players", marketData)
+  })
+
+  
 });
 
 
@@ -91,12 +81,6 @@ function updateGameData(playerData) {
 }
 
 
-
-/*
-server.listen(3001, () => {
-    console.log("server is running")
-})
-*/
 
 http.listen(port, () => {
   console.log(`Socket.IO server running at http://localhost:${port}/`);
