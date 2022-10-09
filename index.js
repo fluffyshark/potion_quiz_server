@@ -12,6 +12,7 @@ app.get('/', (req, res) => {
   let gameData = []
   let gameCode;
   let hostID;
+  let marketData = []
 
 
   
@@ -66,7 +67,7 @@ io.on("connection", (socket) => {
 
   socket.on("sending_player_sellorder", (sellData) => {
     console.log("sending_player_sellorder", sellData)
-    let marketData = {playerName: sellData.playerName, playerID: sellData.playerID}
+    marketData.push({sellData}) 
     io.to(sellData.gameCode).emit("sending_marketData_to_players", marketData)
   })
 
