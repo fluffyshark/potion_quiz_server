@@ -67,12 +67,21 @@ io.on("connection", (socket) => {
 
   socket.on("sending_player_sellorder", (sellData) => {
     console.log("sending_player_sellorder", sellData)
-    marketData.push({sellData}) 
+    marketData.push({playerID: sellData.playerID, playerName: sellData.playerName, ingredient: sellData.ingredient, price: sellData.price, sellID: sellData.sellID, gameCode: sellData.gameCode}) 
     io.to(sellData.gameCode).emit("sending_marketData_to_players", marketData)
+  })
+
+  socket.on("sending_player_buyorder", (buyData) => {
+    let newMarketData = marketData.filter(function( obj ) {return obj.sellID !== buyData[0].sellID});
+    marketData = newMarketData
+    io.to(buyData[0].gameCode).emit("sending_marketData_to_players", marketData)
+    console.log("marketData after buyOrder", marketData)
   })
 
   
 });
+
+
 
 
 // Updating all players' collected game data every time a player get a new card
