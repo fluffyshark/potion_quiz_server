@@ -82,6 +82,8 @@ io.on("connection", (socket) => {
 });
 
 
+// NEXT - IN sending_player_buyorder, PLAYER THAT SOLD THE INGREDIENT SHOULD GET GOLD FOR THE ITEM
+
 
 
 // Updating all players' collected game data every time a player get a new card
