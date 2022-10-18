@@ -35,8 +35,8 @@ io.on("connection", (socket) => {
     gameData = newGameData
     io.in(data).emit("start_game", newGameData); console.log("newGameData", newGameData); 
     io.in(data).emit("host_id", hostID); 
-    console.log("newGameData", newGameData)
-    console.log("GameData", gameData)
+  //  console.log("newGameData", newGameData)
+  //  console.log("GameData", gameData)
   });
 
   // playerData returns {player: string, points: int}
@@ -72,9 +72,11 @@ io.on("connection", (socket) => {
   })
 
   socket.on("sending_player_buyorder", (buyData) => {
+    console.log("buyData[0].gameCode", buyData)
     let newMarketData = marketData.filter(function( obj ) {return obj.sellID !== buyData[0].sellID});
     marketData = newMarketData
     io.to(buyData[0].gameCode).emit("sending_marketData_to_players", marketData)
+    io.to(buyData[0].playerID).emit("sending_successfull_sale", buyData[0].price)
     console.log("marketData after buyOrder", marketData)
   })
 
@@ -83,6 +85,7 @@ io.on("connection", (socket) => {
 
 
 // NEXT - IN sending_player_buyorder, PLAYER THAT SOLD THE INGREDIENT SHOULD GET GOLD FOR THE ITEM
+// NEXT - Implement sold letters at the bottom of buy screen. Player receive money when clicking on them.
 
 
 
