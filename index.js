@@ -14,12 +14,14 @@ app.get('/', (req, res) => {
   let hostID;
   let marketData = []
 
-
+// NEXT - RECONNECTED PLAYER JOIN ROOM, REMOVE PLAYER WITH OLD ID
   
+
+
 io.on("connection", (socket) => {
 
   // Player and host join the same room
-  socket.on("join_room", (data) => {socket.join(data); gameCode = data});
+  socket.on("join_room", (data) => {socket.join(data); gameCode = data; console.log("join_room", data)});
   
   // When player join, then player data is sent to host, player nickname are displayed on host screen
   socket.on("player_joining", (data) => {
@@ -37,6 +39,12 @@ io.on("connection", (socket) => {
     io.in(data).emit("host_id", hostID); 
   //  console.log("newGameData", newGameData)
   //  console.log("GameData", gameData)
+  });
+
+  socket.on("end_game", (gameCode) => {
+    console.log("END GAME")
+  //  io.socketsLeave(gameCode);
+    io.disconnectSockets();
   });
 
   // playerData returns {player: string, points: int}
@@ -79,13 +87,16 @@ io.on("connection", (socket) => {
     io.to(buyData[0].playerID).emit("sending_successfull_sale", buyData[0].price)
     console.log("marketData after buyOrder", marketData)
   })
+  
+  
+
+  console.log("socket.id", socket.id)
+  
+// Removes socket IDs
 
   
 });
 
-
-// NEXT - IN sending_player_buyorder, PLAYER THAT SOLD THE INGREDIENT SHOULD GET GOLD FOR THE ITEM
-// NEXT - Implement sold letters at the bottom of buy screen. Player receive money when clicking on them.
 
 
 
