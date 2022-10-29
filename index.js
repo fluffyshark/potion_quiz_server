@@ -9,52 +9,79 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
   });
 
-  let gameData = []
-  let gameCode;
-  let hostID;
-  let marketData = []
 
-// NEXT - RECONNECTED PLAYER JOIN ROOM, REMOVE PLAYER WITH OLD ID
+  let gameDataObject = [ ]
+
   
+// NEXT - RECONNECTED PLAYER JOIN ROOM, REMOVE PLAYER WITH OLD ID
+// INSIGHT - SERVER DATA IS NOT SEPERATED BY ROOMS - HOSTBOARD SHOW PLAYER FROM OTHER ROOMS, MARKETPLACE DATA SHOW OTHER ROOMS MARKETPLACE, 
+// PREVENT PLAYERS FROM ERLIER CREATED ROOMS FROM PLACEING SELL ORDERS. MIGHT NEED MAKE VARIABLES LIKE GAMEDATA, GAMECODE, HOSTID, AND MARKETDATA INTO OBJECT
+// IDENTIFIED AND ACCESSED BY GAMECODE.
 
+// NEXT - CREATE A GAMEDATA OBJECT
+// Correct game need to be search for by if it contians gameCOde
+// When removing socket.id when ending game, dont forget to delete from gamedata array as well
+// NEXT - POTION DOUBLE POINTS NOT DISAPEARING WHEN USE, USENAVIGATE DON'T WORK EITHER
 
 io.on("connection", (socket) => {
 
-  // Player and host join the same room
-  socket.on("join_room", (data) => {socket.join(data); gameCode = data; console.log("join_room", data)});
   
+  socket.on("host_creating_room", (host_gameCode) => {
+    socket.join(host_gameCode); 
+    gameDataObject.push({
+        gameCode: host_gameCode, 
+        hostID: socket.id, 
+        players: [ ], 
+        marketData: [ ], 
+      })
+  });
+
+  
+  // Player and host join the same room
+  socket.on("join_room", (gameCode) => {
+    socket.join(gameCode); 
+  });
+
   // When player join, then player data is sent to host, player nickname are displayed on host screen
-  socket.on("player_joining", (data) => {
-    socket.to(data.gameCode).emit("player_accepted", data);
-    console.log("data", data)
-    gameData.push({id: socket.id, playerName: data.nickname, cards: data.cards, gameCode: data.gameCode})
+  // player: { nickname, cards, gameCode, coins } 
+  socket.on("player_joining", (playerInfo) => { 
+    // Sending joined player data to host, to be used to display player name on screen
+    socket.to(playerInfo.gameCode).emit("player_accepted", playerInfo);
+    // Sending player their socket id
+    io.to(socket.id).emit("sending_playerID", socket.id);
+    // Adding joined player to game data
+    gameDataObject[getIndexByGamecode(playerInfo.gameCode)].players.push({playerID: socket.id, playerName: playerInfo.nickname, cards: playerInfo.cards, coins: playerInfo.coins})
   });
 
   // When host press "Start Game" all players are directed to QuizView
-  socket.on("ready_game", (data) => {
-    hostID = socket.id
-    let newGameData = gameData.filter(player => player.gameCode === gameCode);
-    gameData = newGameData
-    io.in(data).emit("start_game", newGameData); console.log("newGameData", newGameData); 
-    io.in(data).emit("host_id", hostID); 
-  //  console.log("newGameData", newGameData)
-  //  console.log("GameData", gameData)
+  socket.on("ready_game", (gameCode) => {
+    // Declaring the id of host
+    let hostID = gameDataObject[getIndexByGamecode(gameCode)].hostID
+    // Declaring list of players
+    let newPlayerData = gameDataObject[getIndexByGamecode(gameCode)].players
+    // Emiting to all players to start game, sending list of all player stats
+    io.in(gameCode).emit("start_game", newPlayerData); 
+    // Sending host id to players to for jukebox potion power
+    io.in(gameCode).emit("host_id", hostID); 
   });
 
   socket.on("end_game", (gameCode) => {
     console.log("END GAME")
-  //  io.socketsLeave(gameCode);
-    io.disconnectSockets();
+  //  io.disconnectSockets();
+    console.log("getGameByGamecode", getIndexByGamecode(gameCode))
+    gameDataObject.splice(getIndexByGamecode(gameCode), 1);
+    console.log("gameDataObject", gameDataObject)
+    io.socketsLeave(gameCode);
+    socket.leave(gameCode);
+    console.log(socket)
   });
 
-  // playerData returns {player: string, points: int}
+  // playerData: {playerName, cards, coins, gameCode}
   socket.on("sending_player_cards", (playerData) => {
     // Updating all players' collected game data every time a player get a new card
     updateGameData(playerData)
     // Sending all players' collected game data to all players in the same room
-    io.in(gameCode).emit("sending_server_gameData", gameData);
-   // console.log("GAMEDATA AFTER CRAFTING POTION", gameData)
-    
+    io.in(playerData.gameCode).emit("sending_server_gameData", gameDataObject[getIndexByGamecode(playerData.gameCode)].players);
   });
 
   socket.on("potion_effect", (potionData) => {
@@ -63,7 +90,6 @@ io.on("connection", (socket) => {
     if (potionData.emitData.length === 1) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0])}
     if (potionData.emitData.length === 2) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0]); io.to(potionData.emitData[1].id).emit("potion_curse_blessing", potionData.emitData[1])}
     if (potionData.emitData.length === 3) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0]); io.to(potionData.emitData[1].id).emit("potion_curse_blessing", potionData.emitData[1]); io.to(potionData.emitData[2].id).emit("potion_curse_blessing", potionData.emitData[2])}
-    
   })
 
   // Server receiving a melody "string" from player and server sends it to host
@@ -72,29 +98,33 @@ io.on("connection", (socket) => {
     io.to(melodyData.hostID).emit("sending_jukebox_to_host", melodyData)
   })
 
-
+//  sellData: { playerID, playerName, ingredient, price, gameCode, sellID }
   socket.on("sending_player_sellorder", (sellData) => {
     console.log("sending_player_sellorder", sellData)
-    marketData.push({playerID: sellData.playerID, playerName: sellData.playerName, ingredient: sellData.ingredient, price: sellData.price, sellID: sellData.sellID, gameCode: sellData.gameCode}) 
-    io.to(sellData.gameCode).emit("sending_marketData_to_players", marketData)
+    // Adding sell order to marketData at gameDataObject
+    gameDataObject[getIndexByGamecode(sellData.gameCode)].marketData.push({playerID: sellData.playerID, playerName: sellData.playerName, ingredient: sellData.ingredient, price: sellData.price, sellID: sellData.sellID, gameCode: sellData.gameCode})
+    // Sending market data to all players in game
+    io.to(sellData.gameCode).emit("sending_marketData_to_players", gameDataObject[getIndexByGamecode(sellData.gameCode)].marketData)
   })
 
+  // buyData: [{playerID, playerName, ingredient, price, sellID, gameCode}]
   socket.on("sending_player_buyorder", (buyData) => {
-    console.log("buyData[0].gameCode", buyData)
-    let newMarketData = marketData.filter(function( obj ) {return obj.sellID !== buyData[0].sellID});
-    marketData = newMarketData
-    io.to(buyData[0].gameCode).emit("sending_marketData_to_players", marketData)
+    // Remove sellOrder from marketData array in room (gameCode), that has index of (sellID)
+    gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData.splice(getIndexByGamecode(buyData[0].sellID), 1);
+    // Send market data to all players in room
+    io.to(buyData[0].gameCode).emit("sending_marketData_to_players", gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData)
+    // Notify seller about the sale, will create a letter image, which give money(price) when click on
     io.to(buyData[0].playerID).emit("sending_successfull_sale", buyData[0].price)
-    console.log("marketData after buyOrder", marketData)
   })
   
   
+//  console.log("socket.id", socket.id)
+//  console.log("ROOMS", io.of("/").adapter.rooms)
+  //socket.leave("HxlyMXefwrIc17pWAAAD");
+ // console.log(socket.rooms)
 
-  console.log("socket.id", socket.id)
-  
-// Removes socket IDs
-
-  
+// console.log("gameDataObject", gameDataObject)
+ 
 });
 
 
@@ -102,8 +132,15 @@ io.on("connection", (socket) => {
 
 // Updating all players' collected game data every time a player get a new card
 function updateGameData(playerData) {
-  gameData.map((player) => {if (player.playerName === playerData.playerName) {player.cards = playerData.cards, player.coins = playerData.coins} else {console.log(playerData.playerName, "no match")}})
-  console.log("LOOK FOR COINS PLAYERDATA", playerData)
+  gameDataObject[getIndexByGamecode(playerData.gameCode)].players.map((player) => {if (player.playerName === playerData.playerName) {player.cards = playerData.cards, player.coins = playerData.coins} else {console.log(playerData.playerName, "no match")}})
+}
+
+function getIndexByGamecode(playCode) {
+  const index = gameDataObject.findIndex(object => {
+    return object.gameCode === playCode;
+  });
+
+  return index
 }
 
 
