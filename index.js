@@ -65,15 +65,20 @@ io.on("connection", (socket) => {
     io.in(gameCode).emit("host_id", hostID); 
   });
 
-  socket.on("end_game", (gameCode) => {
-    console.log("END GAME")
-  //  io.disconnectSockets();
+  socket.on("host_end_game", (gameCode) => {
+    io.in(gameCode).emit("host_to_player_to_end_game", gameCode); 
     console.log("getGameByGamecode", getIndexByGamecode(gameCode))
     gameDataObject.splice(getIndexByGamecode(gameCode), 1);
     console.log("gameDataObject", gameDataObject)
-    io.socketsLeave(gameCode);
+  // Ends connection to room
     socket.leave(gameCode);
-    console.log(socket)
+    console.log("END GAME")
+  });
+
+  socket.on("player_end_game", (gameCode) => {
+    console.log("END GAME")
+  // Ends connection to socket room
+    socket.leave(gameCode);
   });
 
   // playerData: {playerName, cards, coins, gameCode}
@@ -118,13 +123,24 @@ io.on("connection", (socket) => {
   })
   
   
+// Show all socket id at server
 //  console.log("socket.id", socket.id)
-//  console.log("ROOMS", io.of("/").adapter.rooms)
-  //socket.leave("HxlyMXefwrIc17pWAAAD");
- // console.log(socket.rooms)
 
+// Show all games that was not removed
 // console.log("gameDataObject", gameDataObject)
- 
+
+// Show all rooms at server
+//  console.log("ROOMS", io.of("/").adapter.rooms)
+
+// Leave room based on room id
+// socket.leave("HxlyMXefwrIc17pWAAAD")
+
+// Show all socket rooms in server
+// console.log(socket.rooms)
+
+// Clear server of all sockets
+//  io.disconnectSockets();
+
 });
 
 
