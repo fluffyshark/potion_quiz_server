@@ -1,6 +1,6 @@
 const app = require('express')();
 const http = require('http').Server(app);
-const io = require('socket.io')(http, {cors: {origin: '*'}});
+const io = require('socket.io')(http, {cors: {origin: '*', credentials:true, optionSuccessStatus:200}});
 const port = process.env.PORT || 3001;
 
 
@@ -21,7 +21,7 @@ app.get('/', (req, res) => {
 // NEXT - CREATE A GAMEDATA OBJECT
 // Correct game need to be search for by if it contians gameCOde
 // When removing socket.id when ending game, dont forget to delete from gamedata array as well
-// NEXT - POTION DOUBLE POINTS NOT DISAPEARING WHEN USE, USENAVIGATE DON'T WORK EITHER
+
 
 io.on("connection", (socket) => {
 
