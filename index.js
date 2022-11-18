@@ -1,13 +1,29 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http, {cors: {origin: '*', credentials:true, optionSuccessStatus:200}});
 const port = process.env.PORT || 3001;
+const path = require("path");
 
 
+const _dirname = path.dirname("");
+const buildPath = path.join(_dirname  , "../client/build");
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-  });
+app.use(express.static(buildPath));
+
+app.get("/*", function(req, res){
+
+    res.sendFile(
+        path.join(__dirname, "../client/build/index.html"),
+        function (err) {
+          if (err) {
+            res.status(500).send(err);
+          }
+        }
+      );
+
+})
+
 
 
   let gameDataObject = [ ]
