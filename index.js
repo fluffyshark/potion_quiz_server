@@ -7,14 +7,14 @@ const path = require("path");
 
 
 const _dirname = path.dirname("");
-const buildPath = path.join(_dirname  , "../potion_quiz_client/client/build");
+const buildPath = path.join(_dirname  , "../potion_quiz_client/build");
 
 app.use(express.static(buildPath));
 
 app.get("/*", function(req, res){
 
     res.sendFile(
-        path.join(__dirname, "../potion_quiz_client/client/build/index.html"),
+        path.join(__dirname, "../potion_quiz_client/build/index.html"),
         function (err) {
           if (err) {
             res.status(500).send(err);
