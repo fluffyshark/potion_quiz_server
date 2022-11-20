@@ -1,9 +1,23 @@
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
-const io = require('socket.io')(http, {cors: {origin: true, credentials:true, optionSuccessStatus:200}});
+
+//const io = require('socket.io')(http, {cors: {origin: true, credentials:true, optionSuccessStatus:200}});
+
+const ios = require('socket.io');
+const io = new ios.Server({
+    allowEIO3: true,
+    cors: {
+        origin: true,
+        credentials: true
+    },
+})
+
+
 const port = process.env.PORT || 3001;
 const path = require("path");
+
+
 
 
 const _dirname = path.dirname("");
