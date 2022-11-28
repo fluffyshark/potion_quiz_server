@@ -2,11 +2,18 @@ const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 
+// -------FOR LOCALHOST-----------
 //const io = require('socket.io')(http, {cors: {origin: true, credentials:true, optionSuccessStatus:200}});
+// -------------------------------------------------
+
+
+
+//--------FOR PRODUCTION---------
+ 
 const io = require('socket.io')(http);
 
 const cors = require('cors');
-const whitelist = ['https://potionquiz.com/', 'http://potionquiz.com/', 'http://16.171.11.140/', 'https://server-potionquiz.herokuapp.com/'];
+const whitelist = ['https://potionquiz.com/', 'http://potionquiz.com/', 'http://16.171.11.140/', 'https://server-potionquiz.herokuapp.com/', 'http://localhost:3001/', 'http://localhost:3000/'];
 const corsOptions = {
   methods: ['GET', 'PUT', 'DELETE', "POST"],
   credentials: true, // This is important.
@@ -19,6 +26,9 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions));
+
+//--------------------------------------------------------- 
+
 
 
 const port = process.env.PORT || 3001;
