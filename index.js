@@ -13,7 +13,7 @@ const io = require('socket.io')(http, {cors: {origin: true, credentials:true, op
 const io = require('socket.io')(http);
 
 const cors = require('cors');
-const whitelist = ['https://potionquiz.com/', 'http://potionquiz.com/', 'http://16.171.11.140/', 'https://server-potionquiz.herokuapp.com/'];
+const whitelist = ['https://potionquiz.com/', 'http://potionquiz.com/', 'http://16.171.11.140/'];
 const corsOptions = {
   methods: ['GET', 'PUT', 'DELETE', 'POST'],
   credentials: true, // This is important.
@@ -21,7 +21,7 @@ const corsOptions = {
     if(whitelist.includes(origin))
       return callback(null, true)
 
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Not allowed by CORS v2'));
   }
 }
 
