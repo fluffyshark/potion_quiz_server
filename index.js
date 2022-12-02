@@ -57,6 +57,7 @@ app.get("/*", function(req, res){
 
 
 
+
   let gameDataObject = [ ]
 
   
@@ -150,6 +151,18 @@ io.on("connection", (socket) => {
     io.to(melodyData.hostID).emit("sending_jukebox_to_host", melodyData)
   })
 
+   // buyData: [{playerID, playerName, ingredient, price, sellID, gameCode}]
+  socket.on("sending_player_buyorder", (buyData) => {
+    // Remove sellOrder from marketData array in room (gameCode), that has index of (sellID)
+    let newMarketData = gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData.filter(function( obj ) {return obj.sellID !== buyData[0].sellID;});
+    // Replace marketData with newMarketData
+    gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData = newMarketData
+    // Send market data to all players in room
+    io.to(buyData[0].gameCode).emit("sending_marketData_to_players", gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData)
+    // Notify seller about the sale, will create a letter image, which give money(price) when click on
+    io.to(buyData[0].playerID).emit("sending_successfull_sale", buyData[0].price)
+  })
+
 //  sellData: { playerID, playerName, ingredient, price, gameCode, sellID }
   socket.on("sending_player_sellorder", (sellData) => {
     console.log("sending_player_sellorder", sellData)
@@ -159,15 +172,7 @@ io.on("connection", (socket) => {
     io.to(sellData.gameCode).emit("sending_marketData_to_players", gameDataObject[getIndexByGamecode(sellData.gameCode)].marketData)
   })
 
-  // buyData: [{playerID, playerName, ingredient, price, sellID, gameCode}]
-  socket.on("sending_player_buyorder", (buyData) => {
-    // Remove sellOrder from marketData array in room (gameCode), that has index of (sellID)
-    gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData.splice(getIndexByGamecode(buyData[0].sellID), 1);
-    // Send market data to all players in room
-    io.to(buyData[0].gameCode).emit("sending_marketData_to_players", gameDataObject[getIndexByGamecode(buyData[0].gameCode)].marketData)
-    // Notify seller about the sale, will create a letter image, which give money(price) when click on
-    io.to(buyData[0].playerID).emit("sending_successfull_sale", buyData[0].price)
-  })
+ 
   
   
 // Show all socket id at server
