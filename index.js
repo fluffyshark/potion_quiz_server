@@ -139,10 +139,30 @@ io.on("connection", (socket) => {
 
   socket.on("potion_effect", (potionData) => {
     console.log("potion_effect", potionData.emitData)
+    console.log("potion_effect_lenght", potionData.emitData.length)
+    let gameCode = potionData.emitData[0].gameCode
+    console.log("gameDataObject.players", gameDataObject[getIndexByGamecode(gameCode)].players)
     // Sends data to one, two, or three players depending on potion type on client side.
-    if (potionData.emitData.length === 1) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0])}
-    if (potionData.emitData.length === 2) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0]); io.to(potionData.emitData[1].id).emit("potion_curse_blessing", potionData.emitData[1])}
-    if (potionData.emitData.length === 3) {io.to(potionData.emitData[0].id).emit("potion_curse_blessing", potionData.emitData[0]); io.to(potionData.emitData[1].id).emit("potion_curse_blessing", potionData.emitData[1]); io.to(potionData.emitData[2].id).emit("potion_curse_blessing", potionData.emitData[2])}
+    let firstSelectedPlayer = gameDataObject[getIndexByGamecode(gameCode)].players.filter(player => player.playerName === potionData.emitData[0].playerName);
+    if (potionData.emitData.length === 1) {
+      io.to(firstSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[0])
+    }
+    if (potionData.emitData.length === 2) {
+      let secondSelectedPlayer = gameDataObject[getIndexByGamecode(gameCode)].players.filter(player => player.playerName === potionData.emitData[1].playerName);
+      io.to(firstSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[0]); io.to(secondSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[1])
+    }
+    if (potionData.emitData.length === 3) {
+      let secondSelectedPlayer = gameDataObject[getIndexByGamecode(gameCode)].players.filter(player => player.playerName === potionData.emitData[1].playerName);
+      let thirdSelectedPlayer = gameDataObject[getIndexByGamecode(gameCode)].players.filter(player => player.playerName === potionData.emitData[2].playerName);
+      io.to(firstSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[0]); io.to(secondSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[1]); io.to(thirdSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[2])
+    }
+    
+    // WHAT DOES io.to mean, to all?
+
+    
+   
+    
+    
   })
 
   // Server receiving a melody "string" from player and server sends it to host
