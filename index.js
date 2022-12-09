@@ -57,7 +57,7 @@ app.get("/*", function(req, res){
 
 
 
-
+  // Declare array that will hold game data
   let gameDataObject = [ ]
 
   
@@ -66,8 +66,7 @@ app.get("/*", function(req, res){
 // PREVENT PLAYERS FROM ERLIER CREATED ROOMS FROM PLACEING SELL ORDERS. MIGHT NEED MAKE VARIABLES LIKE GAMEDATA, GAMECODE, HOSTID, AND MARKETDATA INTO OBJECT
 // IDENTIFIED AND ACCESSED BY GAMECODE.
 
-// NEXT - CREATE A GAMEDATA OBJECT
-// Correct game need to be search for by if it contians gameCOde
+
 // When removing socket.id when ending game, dont forget to delete from gamedata array as well
 
 
@@ -80,7 +79,8 @@ io.on("connection", (socket) => {
         gameCode: host_gameCode, 
         hostID: socket.id, 
         players: [ ], 
-        marketData: [ ], 
+        marketData: [ ],
+        prevAuctionSlot: 200, 
       })
   });
 
@@ -98,7 +98,7 @@ io.on("connection", (socket) => {
     // Sending player their socket id
     io.to(socket.id).emit("sending_playerID", socket.id);
     // Adding joined player to game data
-    gameDataObject[getIndexByGamecode(playerInfo.gameCode)].players.push({playerID: socket.id, playerName: playerInfo.nickname, cards: playerInfo.cards, coins: playerInfo.coins})
+    gameDataObject[getIndexByGamecode(playerInfo.gameCode)].players.push({playerID: socket.id, playerName: playerInfo.nickname, cards: playerInfo.cards, coins: playerInfo.coins, prevAuctionSlot: 200})
   });
 
   // When host press "Start Game" all players are directed to QuizView
@@ -156,13 +156,6 @@ io.on("connection", (socket) => {
       let thirdSelectedPlayer = gameDataObject[getIndexByGamecode(gameCode)].players.filter(player => player.playerName === potionData.emitData[2].playerName);
       io.to(firstSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[0]); io.to(secondSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[1]); io.to(thirdSelectedPlayer[0].playerID).emit("potion_curse_blessing", potionData.emitData[2])
     }
-    
-    // WHAT DOES io.to mean, to all?
-
-    
-   
-    
-    
   })
 
   // Server receiving a melody "string" from player and server sends it to host
@@ -190,6 +183,22 @@ io.on("connection", (socket) => {
     gameDataObject[getIndexByGamecode(sellData.gameCode)].marketData.push({playerID: sellData.playerID, playerName: sellData.playerName, ingredient: sellData.ingredient, price: sellData.price, sellID: sellData.sellID, gameCode: sellData.gameCode})
     // Sending market data to all players in game
     io.to(sellData.gameCode).emit("sending_marketData_to_players", gameDataObject[getIndexByGamecode(sellData.gameCode)].marketData)
+  })
+
+  // auctionData: {auctionSlot, auctionInfo, gameCode}
+  socket.on("auction_card_expired_or_bought", (auctionData) => {
+    
+    if (gameDataObject[getIndexByGamecode(auctionData.gameCode)].hasOwnProperty('prevAuctionSlot')) {
+        // Prevent server from handle request for the same action cards from multiple clients
+      if (auctionData.auctionSlot !== gameDataObject[getIndexByGamecode(auctionData.gameCode)].prevAuctionSlot) {
+        // Generate a random card id (choosing which card to auction off)
+        const newCardID = Math.floor(Math.random() * 20);
+        // Send data to clients about new auction card id to which empty slot
+        io.to(auctionData.gameCode).emit("new_auction_card_to_players", {auctionSlot: auctionData.auctionSlot, newAuctionCard: newCardID})
+        // Set expired or bought card as the latest card handled
+        gameDataObject[getIndexByGamecode(auctionData.gameCode)].prevAuctionSlot = auctionData.auctionSlot
+      }
+    }
   })
 
  
