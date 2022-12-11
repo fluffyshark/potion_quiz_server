@@ -7,7 +7,7 @@ const io = require('socket.io')(http, {cors: {origin: true, credentials:true, op
 // -------------------------------------------------
 
 
-
+// Looks like this is not needed
 //--------FOR PRODUCTION---------
 /*
 const io = require('socket.io')(http);
@@ -115,16 +115,12 @@ io.on("connection", (socket) => {
 
   socket.on("host_end_game", (gameCode) => {
     io.in(gameCode).emit("host_to_player_to_end_game", gameCode); 
-    console.log("getGameByGamecode", getIndexByGamecode(gameCode))
     gameDataObject.splice(getIndexByGamecode(gameCode), 1);
-    console.log("gameDataObject", gameDataObject)
   // Ends connection to room
     socket.leave(gameCode);
-    console.log("END GAME")
   });
 
   socket.on("player_end_game", (gameCode) => {
-    console.log("END GAME")
   // Ends connection to socket room
     socket.leave(gameCode);
   });
@@ -138,10 +134,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("potion_effect", (potionData) => {
-    console.log("potion_effect", potionData.emitData)
-    console.log("potion_effect_lenght", potionData.emitData.length)
     let gameCode = potionData.emitData[0].gameCode
-    console.log("gameDataObject.players", gameDataObject[getIndexByGamecode(gameCode)].players)
     // Sends data to one, two, or three players depending on potion type on client side.
     let firstSelectedPlayer = gameDataObject[getIndexByGamecode(gameCode)].players.filter(player => player.playerName === potionData.emitData[0].playerName);
     if (potionData.emitData.length === 1) {
@@ -160,7 +153,6 @@ io.on("connection", (socket) => {
 
   // Server receiving a melody "string" from player and server sends it to host
   socket.on("sending_jukebox_to_server", (melodyData) => {
-    console.log("sending_jukebox_to_server", melodyData)
     io.to(melodyData.hostID).emit("sending_jukebox_to_host", melodyData)
   })
 
@@ -178,7 +170,6 @@ io.on("connection", (socket) => {
 
 //  sellData: { playerID, playerName, ingredient, price, gameCode, sellID }
   socket.on("sending_player_sellorder", (sellData) => {
-    console.log("sending_player_sellorder", sellData)
     // Adding sell order to marketData at gameDataObject
     gameDataObject[getIndexByGamecode(sellData.gameCode)].marketData.push({playerID: sellData.playerID, playerName: sellData.playerName, ingredient: sellData.ingredient, price: sellData.price, sellID: sellData.sellID, gameCode: sellData.gameCode})
     // Sending market data to all players in game
@@ -187,8 +178,10 @@ io.on("connection", (socket) => {
 
   // auctionData: {auctionSlot, auctionInfo, gameCode}
   socket.on("auction_card_expired_or_bought", (auctionData) => {
-    
-    if (gameDataObject[getIndexByGamecode(auctionData.gameCode)].hasOwnProperty('prevAuctionSlot')) {
+    // Make sure that server don't crash because gameData are erased when host ending game 
+    if (gameDataObject[getIndexByGamecode(auctionData.gameCode)] !== undefined) {
+      
+      if (gameDataObject[getIndexByGamecode(auctionData.gameCode)].hasOwnProperty('prevAuctionSlot')) {
         // Prevent server from handle request for the same action cards from multiple clients
       if (auctionData.auctionSlot !== gameDataObject[getIndexByGamecode(auctionData.gameCode)].prevAuctionSlot) {
         // Generate a random card id (choosing which card to auction off)
@@ -199,6 +192,9 @@ io.on("connection", (socket) => {
         gameDataObject[getIndexByGamecode(auctionData.gameCode)].prevAuctionSlot = auctionData.auctionSlot
       }
     }
+    }
+
+    
   })
 
  
@@ -229,7 +225,11 @@ io.on("connection", (socket) => {
 
 // Updating all players' collected game data every time a player get a new card
 function updateGameData(playerData) {
-  gameDataObject[getIndexByGamecode(playerData.gameCode)].players.map((player) => {if (player.playerName === playerData.playerName) {player.cards = playerData.cards, player.coins = playerData.coins} else {console.log(playerData.playerName, "no match")}})
+  gameDataObject[getIndexByGamecode(playerData.gameCode)].players.map((player) => {
+    if (player.playerName === playerData.playerName) {
+      player.cards = playerData.cards, player.coins = playerData.coins} 
+      else {console.log(playerData.playerName, "no match")}
+  })
 }
 
 function getIndexByGamecode(playCode) {
