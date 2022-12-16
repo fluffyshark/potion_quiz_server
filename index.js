@@ -81,6 +81,7 @@ io.on("connection", (socket) => {
         players: [ ], 
         marketData: [ ],
         prevAuctionSlot: 200, 
+        gameStatus: "player_onboarding"
       })
   });
 
@@ -88,6 +89,13 @@ io.on("connection", (socket) => {
   // Player and host join the same room
   socket.on("join_room", (gameCode) => {
     socket.join(gameCode); 
+  // If game is ongoing then players who join will immedietly enter game
+    if (gameDataObject[getIndexByGamecode(gameCode)].gameStatus === "game_ongoing") {
+      // Declaring list of players
+      let newPlayerData = gameDataObject[getIndexByGamecode(gameCode)].players
+      // Tell player to start game, sending gameData
+      io.to(socket.id).emit("start_game", newPlayerData); 
+    }
   });
 
   // When player join, then player data is sent to host, player nickname are displayed on host screen
@@ -107,6 +115,8 @@ io.on("connection", (socket) => {
     let hostID = gameDataObject[getIndexByGamecode(gameCode)].hostID
     // Declaring list of players
     let newPlayerData = gameDataObject[getIndexByGamecode(gameCode)].players
+    // Change gameStatus from "player_onboarding" to "game_ongoing"
+    gameDataObject[getIndexByGamecode(gameCode)].gameStatus = "game_ongoing"
     // Emiting to all players to start game, sending list of all player stats
     io.in(gameCode).emit("start_game", newPlayerData); 
     // Sending host id to players to for jukebox potion power
