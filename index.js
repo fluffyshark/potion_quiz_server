@@ -110,7 +110,9 @@ io.on("connection", (socket) => {
   });
 
   // When host press "Start Game" all players are directed to QuizView
-  socket.on("ready_game", (gameCode) => {
+  //---------------------------------------------------
+  socket.on("ready_game", (gameCode /*, quizData*/) => {
+  //---------------------------------------------------
     // Declaring the id of host
     let hostID = gameDataObject[getIndexByGamecode(gameCode)].hostID
     // Declaring list of players
@@ -118,7 +120,9 @@ io.on("connection", (socket) => {
     // Change gameStatus from "player_onboarding" to "game_ongoing"
     gameDataObject[getIndexByGamecode(gameCode)].gameStatus = "game_ongoing"
     // Emiting to all players to start game, sending list of all player stats
-    io.in(gameCode).emit("start_game", newPlayerData); 
+    //---------------------------------------------------
+    io.in(gameCode).emit("start_game", newPlayerData, /*quizData*/); 
+    //---------------------------------------------------
     // Sending host id to players to for jukebox potion power
     io.in(gameCode).emit("host_id", hostID); 
   });
@@ -203,12 +207,10 @@ io.on("connection", (socket) => {
       }
     }
     }
-
-    
   })
 
  
-  
+
   
 // Show all socket id at server
 //  console.log("socket.id", socket.id)
