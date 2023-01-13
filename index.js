@@ -139,6 +139,12 @@ io.on("connection", (socket) => {
     socket.leave(gameCode);
   });
 
+  // sending_player_quiz_score: {playerQuizScore: {totalQuestions, correct, wrong}, gameCode}
+  socket.on("sending_player_quiz_score", (playerQuizScore) => {
+    // Sending player quiz score to host
+    socket.to(playerQuizScore.gameCode).emit("to_host_player_quiz_score", playerQuizScore);
+  });
+
   // playerData: {playerName, cards, coins, gameCode}
   socket.on("sending_player_cards", (playerData) => {
     // Updating all players' collected game data every time a player get a new card
