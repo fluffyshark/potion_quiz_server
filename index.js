@@ -73,10 +73,11 @@ app.get("/*", function(req, res){
 io.on("connection", (socket) => {
 
   
-  socket.on("host_creating_room", (host_gameCode) => {
-    socket.join(host_gameCode); 
+  socket.on("host_creating_game", (hostData) => {
+    socket.join(hostData); 
+    
     gameDataObject.push({
-        gameCode: host_gameCode, 
+        gameCode: hostData, 
         hostID: socket.id, 
         players: [ ], 
         marketData: [ ],
@@ -90,12 +91,14 @@ io.on("connection", (socket) => {
   socket.on("join_room", (gameCode) => {
     socket.join(gameCode); 
   // If game is ongoing then players who join will immedietly enter game
-    if (gameDataObject[getIndexByGamecode(gameCode)].gameStatus === "game_ongoing") {
+    
+  if (gameDataObject[getIndexByGamecode(gameCode)].gameStatus === "game_ongoing") {
       // Declaring list of players
       let newPlayerData = gameDataObject[getIndexByGamecode(gameCode)].players
       // Tell player to start game, sending gameData
       io.to(socket.id).emit("start_game", newPlayerData); 
-    }
+    } 
+    
   });
 
   // When player join, then player data is sent to host, player nickname are displayed on host screen
